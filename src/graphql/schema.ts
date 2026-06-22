@@ -1,4 +1,6 @@
-export const typeDefs = /* GraphQL */ `
+import { gql } from 'graphql-tag';
+
+export const typeDefs = gql`
   enum Activity {
     SKIING
     SURFING
