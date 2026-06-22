@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model CityGeocode {
+  id        String   @id @default(uuid())
+  cityName  String   @unique
+  lat       Float
+  lon       Float
+  country   String
+  cachedAt  DateTime @default(now())
+}
+
+model WeatherCache {
+  id           String   @id @default(uuid())
+  cityName     String   @unique
+  lat          Float
+  lon          Float
+  country      String
+  forecastJson String
+  marineJson   String?
+  cachedAt     DateTime @default(now())
+  expiresAt    DateTime
+}
