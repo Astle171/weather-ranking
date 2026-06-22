@@ -62,6 +62,25 @@ Format: phase → what happened → why it mattered.
 
 ---
 
+## Phase 5 — GraphQL + Server Wiring
+
+### Prisma v7 WASM engine requires a driver adapter — `new PrismaClient()` no longer works
+
+- **What happened:** When wiring the real server in Phase 5, `npm run dev` crashed immediately with `PrismaClientInitializationError: PrismaClient needs to be constructed with a non-empty, valid PrismaClientOptions`. `new PrismaClient()` with no arguments had always worked in prior Prisma versions.
+- **Root cause:** Prisma v7 changed the default engine from the native binary (`library`) to a WASM-based query compiler (`client`). The WASM engine has no way to resolve a database URL on its own — it requires either an Accelerate proxy URL or a driver adapter. Without one, the constructor throws.
+- **Attempts that failed:**
+  - `new PrismaClient({ datasourceUrl: process.env.DATABASE_URL })` — TypeScript rejected it; `datasourceUrl` is not in the v7 types.
+  - `engineType = "library"` in `schema.prisma` + `prisma generate` — the option was silently ignored; the generated client still used the WASM engine and had no native binary bundled.
+- **Fix:** Installed `@prisma/adapter-better-sqlite3` and `better-sqlite3`. Updated `src/lib/prisma.ts` to use the factory adapter:
+  ```ts
+  const adapter = new PrismaBetterSqlite3({ url: dbPath });
+  const prisma = new PrismaClient({ adapter });
+  ```
+  The `url` field takes a plain file path (no `file:` prefix), so the `.env` value is stripped before passing.
+- **Why it mattered:** This is a silent breaking change in Prisma v7 that affects any project using SQLite without a connection URL in `schema.prisma`. The migration guide documents it but only for users who explicitly upgrade. Worth flagging for the assessor since it required investigation mid-phase.
+
+---
+
 ## Phase 4 — ActivityRankingService
 
 ### Double repository lookup on every request — eliminated

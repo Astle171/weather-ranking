@@ -1,20 +1,25 @@
+import 'dotenv/config';
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
+import { typeDefs } from './graphql/schema';
+import { createResolvers } from './graphql/resolvers';
+import { PrismaWeatherRepository } from './repository/prisma-weather.repository';
+import { GeocodingClient } from './weather/geocoding.client';
+import { OpenMeteoClient } from './weather/open-meteo.client';
+import { ActivityRankingService } from './services/activity-ranking.service';
 
-const typeDefs = `#graphql
-  type Query {
-    health: String!
-  }
-`;
+const repo = new PrismaWeatherRepository();
+const geocodingClient = new GeocodingClient();
+const weatherClient = new OpenMeteoClient();
+const service = new ActivityRankingService(repo, geocodingClient, weatherClient);
 
-const resolvers = {
-  Query: {
-    health: () => 'ok',
-  },
-};
+const server = new ApolloServer({
+  typeDefs,
+  resolvers: createResolvers(service),
+  introspection: true,
+});
 
 async function main() {
-  const server = new ApolloServer({ typeDefs, resolvers });
   const { url } = await startStandaloneServer(server, {
     listen: { port: 4000 },
   });
