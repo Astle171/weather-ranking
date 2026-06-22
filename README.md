@@ -165,6 +165,8 @@ GraphQL Query (city: String!)
 
 See [ASSUMPTIONS.md](ASSUMPTIONS.md) for all product decisions (skill level assumed, scoring rationale, cache TTL choice, etc.).
 
+Upfront plan: [docs/plan.md](docs/plan.md)
+
 Engineering trade-offs: [docs/tradeoffs.md](docs/tradeoffs.md)
 
 AI session log: [docs/ai-session.md](docs/ai-session.md)
