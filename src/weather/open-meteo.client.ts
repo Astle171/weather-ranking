@@ -35,18 +35,17 @@ export class OpenMeteoClient {
       `?latitude=${lat}&longitude=${lon}` +
       `&daily=wave_height_max,swell_wave_height_max&forecast_days=7`;
 
-    const forecastResponse = await fetch(forecastUrl);
-    const forecastData = (await forecastResponse.json()) as ForecastApiResponse;
+    const forecastPromise = fetch(forecastUrl);
+    const marinePromise = fetch(marineUrl)
+      .then((r) => (r.ok ? (r.json() as Promise<MarineApiResponse>) : null))
+      .catch(() => null);
 
-    let marineData: MarineApiResponse | null = null;
-    try {
-      const marineResponse = await fetch(marineUrl);
-      if (marineResponse.ok) {
-        marineData = (await marineResponse.json()) as MarineApiResponse;
-      }
-    } catch {
-      // landlocked city or marine API unavailable — wave data stays null
-    }
+    const [forecastResponse, marineData] = await Promise.all([
+      forecastPromise,
+      marinePromise,
+    ]);
+
+    const forecastData = (await forecastResponse.json()) as ForecastApiResponse;
 
     const { daily } = forecastData;
 
