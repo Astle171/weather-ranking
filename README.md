@@ -2,6 +2,8 @@
 
 A Node.js + GraphQL API that accepts a city name, fetches a 7-day forecast from [Open-Meteo](https://open-meteo.com/) (free, no API key), and returns four activities — **Skiing, Surfing, Outdoor Sightseeing, Indoor Sightseeing** — ranked by suitability with scores, verdicts, and daily breakdowns. Results are cached for 1 hour per city.
 
+**Live:** `https://weather-ranking-production.up.railway.app`
+
 ---
 
 ## Tech Stack
@@ -10,21 +12,23 @@ A Node.js + GraphQL API that accepts a city name, fetches a 7-day forecast from 
 |---------|--------|-----|
 | Runtime | Node.js 20 + TypeScript (strict) | Type safety end-to-end |
 | API | GraphQL — Apollo Server v4 | Flexible query shape, introspection |
-| Storage | SQLite via Prisma ORM v7 | Zero infrastructure; Prisma abstracts the DB (Postgres = 1-line change) |
+| Storage | PostgreSQL via Prisma ORM v7 | Zero-friction swap from SQLite via `IWeatherRepository` interface |
 | Testing | Jest + ts-jest | 85 tests, pure scorer functions need no mocks |
 | HTTP | native `fetch` | No extra dependency for Node 20 |
 
 ---
 
-## Setup & Running
+## Try It (Live)
+
+Send a POST to `https://weather-ranking-production.up.railway.app`:
 
 ```bash
-npm install
-npx prisma migrate dev --name init   # creates dev.db (SQLite)
-npm run dev                          # Apollo Server at http://localhost:4000
+curl -X POST https://weather-ranking-production.up.railway.app \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ rankActivities(city: \"Innsbruck\") { city country rankings { rank activity overallScore verdict } } }"}'
 ```
 
-Open **http://localhost:4000** in your browser — Apollo Sandbox opens automatically.
+Or open `https://weather-ranking-production.up.railway.app` in a browser — Apollo Sandbox loads automatically.
 
 ---
 
@@ -96,6 +100,26 @@ Surfing scores 20 because Innsbruck is landlocked — the marine API returns no 
 
 ---
 
+## Running Locally
+
+Requires a PostgreSQL database. Set `DATABASE_URL` in a `.env` file:
+
+```bash
+DATABASE_URL=postgresql://user:password@localhost:5432/weather_ranking
+```
+
+Then:
+
+```bash
+npm install
+npx prisma migrate deploy   # creates tables
+npm run dev                 # Apollo Server at http://localhost:4000
+```
+
+Open **http://localhost:4000** in your browser — Apollo Sandbox opens automatically.
+
+---
+
 ## Running Tests
 
 ```bash
@@ -103,6 +127,8 @@ npm test                                        # all 85 tests
 npm test -- --testPathPattern=skiing.scorer     # single file
 npm test -- --coverage                          # with coverage report
 ```
+
+Tests use an `InMemoryWeatherRepository` — no database required.
 
 ---
 

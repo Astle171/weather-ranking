@@ -6,15 +6,15 @@ Decisions made during this build, with reasoning. Written for assessors who want
 
 ## 1. SQLite vs Redis vs PostgreSQL
 
-**Chose: SQLite via Prisma**
+**Chose: PostgreSQL in production (Railway), SQLite viable locally**
 
 The workload is read-heavy and write-infrequent — a city's cache entry is written once per hour and read on every subsequent request within that window. There are no concurrent writes (single-process Node.js), no cross-service cache invalidation, and no need for pub/sub or TTL eviction built into the store.
 
-**Redis** is the instinctive choice for a cache, but it requires running an external service. For a take-home exercise that should start with `npm install && npm run dev`, a Redis dependency is pure overhead. Redis adds value when you need cross-process cache sharing, sub-millisecond latency at scale, or built-in TTL eviction — none of which apply here.
+**Redis** is the instinctive choice for a cache, but it requires running an external service. For a take-home exercise, a Redis dependency is pure overhead. Redis adds value when you need cross-process cache sharing, sub-millisecond latency at scale, or built-in TTL eviction — none of which apply here.
 
-**PostgreSQL** would be correct for production (horizontal scaling, connection pooling, replication), but again adds infrastructure for no concrete benefit at this scale.
+**SQLite** was the original local choice: zero-infrastructure persistence, survives process restarts, and Prisma abstracts the storage layer. The `IWeatherRepository` interface means switching databases is a single new implementation — no service, scorer, or resolver changes required. Switching to PostgreSQL for deployment was a one-line provider change in `prisma.config.ts` and one migration.
 
-**SQLite** gives us zero-infrastructure persistence, survives process restarts, and Prisma abstracts the storage layer completely. Switching to PostgreSQL for production is a one-line change in `prisma.config.ts` and one schema migration. The trade-off is that SQLite doesn't scale beyond a single process — acceptable here, a real constraint in production (see §7).
+**PostgreSQL** is used in production (Railway) for compatibility with hosted infrastructure. The trade-off vs SQLite is an external service dependency — acceptable when the host provides it managed.
 
 ---
 
