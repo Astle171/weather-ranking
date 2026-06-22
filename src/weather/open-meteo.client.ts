@@ -1,4 +1,5 @@
 import { DayForecast } from '../scoring/types';
+import { WeatherFetchError } from '../shared/errors/weather-fetch.error';
 
 interface ForecastApiResponse {
   daily: {
@@ -44,6 +45,10 @@ export class OpenMeteoClient {
       forecastPromise,
       marinePromise,
     ]);
+
+    if (!forecastResponse.ok) {
+      throw new WeatherFetchError(`Forecast API error`, forecastResponse.status);
+    }
 
     const forecastData = (await forecastResponse.json()) as ForecastApiResponse;
 

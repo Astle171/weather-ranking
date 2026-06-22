@@ -16,9 +16,9 @@ function scoreBadWeather(group: WeatherGroup, precipitationMm: number): { bonus:
 function scoreExtremeTemperature(maxTempC: number): { bonus: number; highlights: string[] } {
   if (maxTempC < -5)                      return { bonus: 15, highlights: ['Too cold to be outside long'] };
   if (maxTempC > 33)                      return { bonus: 15, highlights: ['Too hot to be outside long'] };
-  if (maxTempC >= 0 && maxTempC <= -5)    return { bonus: 8,  highlights: [] }; // 0 to -5 range (unreachable — covered above)
+  if (maxTempC >= -5 && maxTempC < 0)     return { bonus: 8,  highlights: [] };
   if (maxTempC >= 28 && maxTempC <= 33)   return { bonus: 8,  highlights: [] };
-  if (maxTempC >= 0 && maxTempC < 5)      return { bonus: 8,  highlights: [] }; // 0 to 5
+  if (maxTempC >= 0 && maxTempC < 5)      return { bonus: 8,  highlights: [] };
   return                                         { bonus: 0,  highlights: [] };
 }
 

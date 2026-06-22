@@ -43,3 +43,19 @@ Format: phase → what happened → why it mattered.
   await Promise.all([forecastPromise, marinePromise]);
   ```
 - **Why it mattered:** Both calls still run in parallel — neither is awaited before the other starts. But synchronous declaration order must match the test mock registration order. A subtle distinction between "parallel execution" and "call order".
+
+---
+
+## Post Phase 3 — Optimisation Scan
+
+### I asked Claude to scan for optimisations — it found a correctness bug and two reliability gaps
+
+**Correctness bug in `indoor-sightseeing.scorer.ts`:**
+- **What happened:** Claude's `scoreExtremeTemperature` function had an impossible condition: `maxTempC >= 0 && maxTempC <= -5`. A number cannot be both ≥ 0 and ≤ -5 simultaneously, so that branch was always dead. The -5 to 0°C range fell through to the default `bonus: 0` instead of getting the intended `bonus: 8`.
+- **Fix:** Changed to `maxTempC >= -5 && maxTempC < 0`.
+- **Why it mattered:** The scoring logic was silently wrong for near-freezing temperatures. All existing tests still passed because no test used a temperature in the -5 to 0 range as the primary assertion — the bug had been hiding behind test gaps.
+
+**Missing `response.ok` guards in weather clients:**
+- **What happened:** The marine API fetch correctly checked `r.ok` before parsing, but the forecast fetch (`open-meteo.client.ts`) and geocoding fetch (`geocoding.client.ts`) called `.json()` directly without checking the HTTP status code first. A 4xx or 5xx response with a JSON error body would be silently cast to the expected type and produce garbage data downstream.
+- **Fix:** Added `if (!response.ok) throw new WeatherFetchError(...)` before `.json()` in both clients.
+- **Why it mattered:** The inconsistency was easy to miss because the marine path was already correct. The forecast and geocoding paths were subtly more fragile — they would not throw a meaningful error on API failure, making outages very hard to diagnose.
