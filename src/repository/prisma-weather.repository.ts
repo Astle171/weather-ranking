@@ -1,8 +1,7 @@
 import prisma from '../lib/prisma';
 import { IWeatherRepository, CachedForecast } from './weather.repository.interface';
 import { DayForecast } from '../scoring/types';
-
-const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+import { buildExpiresAt, isCacheExpired } from './cache-policy';
 
 export class PrismaWeatherRepository implements IWeatherRepository {
   async getForecast(cityName: string): Promise<CachedForecast | null> {
@@ -26,7 +25,7 @@ export class PrismaWeatherRepository implements IWeatherRepository {
   async saveForecast(data: CachedForecast): Promise<void> {
     const city = data.cityName.toLowerCase();
     const cachedAt = data.cachedAt;
-    const expiresAt = new Date(cachedAt.getTime() + CACHE_TTL_MS);
+    const expiresAt = buildExpiresAt(cachedAt);
 
     const hasMarineData = data.forecast.some((day) => day.waveHeightM !== null);
     const marineJson = hasMarineData
@@ -67,7 +66,7 @@ export class PrismaWeatherRepository implements IWeatherRepository {
       where: { cityName: cityName.toLowerCase() },
     });
     if (!record) return false;
-    return record.expiresAt > new Date();
+    return !isCacheExpired(record.expiresAt);
   }
 
   async getCityGeocode(

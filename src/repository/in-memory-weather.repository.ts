@@ -1,4 +1,5 @@
 import { IWeatherRepository, CachedForecast } from './weather.repository.interface';
+import { isCacheExpired } from './cache-policy';
 
 export class InMemoryWeatherRepository implements IWeatherRepository {
   private forecasts = new Map<string, CachedForecast>();
@@ -15,7 +16,7 @@ export class InMemoryWeatherRepository implements IWeatherRepository {
   async isCacheValid(cityName: string): Promise<boolean> {
     const cached = this.forecasts.get(cityName.toLowerCase());
     if (!cached) return false;
-    return cached.expiresAt > new Date();
+    return !isCacheExpired(cached.expiresAt);
   }
 
   async getCityGeocode(cityName: string): Promise<{ lat: number; lon: number; country: string } | null> {
