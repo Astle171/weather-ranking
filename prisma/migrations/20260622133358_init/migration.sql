@@ -1,24 +1,28 @@
 -- CreateTable
 CREATE TABLE "CityGeocode" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "cityName" TEXT NOT NULL,
-    "lat" REAL NOT NULL,
-    "lon" REAL NOT NULL,
+    "lat" DOUBLE PRECISION NOT NULL,
+    "lon" DOUBLE PRECISION NOT NULL,
     "country" TEXT NOT NULL,
-    "cachedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "cachedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "CityGeocode_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "WeatherCache" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "cityName" TEXT NOT NULL,
-    "lat" REAL NOT NULL,
-    "lon" REAL NOT NULL,
+    "lat" DOUBLE PRECISION NOT NULL,
+    "lon" DOUBLE PRECISION NOT NULL,
     "country" TEXT NOT NULL,
     "forecastJson" TEXT NOT NULL,
     "marineJson" TEXT,
-    "cachedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "expiresAt" DATETIME NOT NULL
+    "cachedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "WeatherCache_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
