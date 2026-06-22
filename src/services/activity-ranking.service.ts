@@ -1,5 +1,5 @@
-import { IWeatherRepository } from '../repository/weather.repository.interface';
-import { buildExpiresAt } from '../repository/cache-policy';
+import { IWeatherRepository, CachedForecast } from '../repository/weather.repository.interface';
+import { buildExpiresAt, isCacheExpired } from '../repository/cache-policy';
 import { GeocodingClient } from '../weather/geocoding.client';
 import { OpenMeteoClient } from '../weather/open-meteo.client';
 import { rankActivities as rankByEngine } from '../scoring/ranking-engine';
@@ -15,7 +15,10 @@ export class ActivityRankingService {
   async rankActivities(cityName: string): Promise<RankingResult> {
     const normalizedCity = cityName.toLowerCase();
 
-    if (!(await this.repo.isCacheValid(normalizedCity))) {
+    // Single repo read — check existence and freshness in one step
+    let cached: CachedForecast | null = await this.repo.getForecast(normalizedCity);
+
+    if (!cached || isCacheExpired(cached.expiresAt)) {
       let geo = await this.repo.getCityGeocode(normalizedCity);
 
       if (!geo) {
@@ -27,7 +30,7 @@ export class ActivityRankingService {
       const forecast = await this.weatherClient.getForecast(geo.lat, geo.lon);
       const cachedAt = new Date();
 
-      await this.repo.saveForecast({
+      cached = {
         cityName: normalizedCity,
         lat: geo.lat,
         lon: geo.lon,
@@ -35,10 +38,10 @@ export class ActivityRankingService {
         forecast,
         cachedAt,
         expiresAt: buildExpiresAt(cachedAt),
-      });
+      };
+      await this.repo.saveForecast(cached);
     }
 
-    const cached = (await this.repo.getForecast(normalizedCity))!;
     const rankings = rankByEngine(cached.forecast);
 
     return {

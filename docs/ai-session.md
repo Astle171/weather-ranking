@@ -59,3 +59,13 @@ Format: phase → what happened → why it mattered.
 - **What happened:** The marine API fetch correctly checked `r.ok` before parsing, but the forecast fetch (`open-meteo.client.ts`) and geocoding fetch (`geocoding.client.ts`) called `.json()` directly without checking the HTTP status code first. A 4xx or 5xx response with a JSON error body would be silently cast to the expected type and produce garbage data downstream.
 - **Fix:** Added `if (!response.ok) throw new WeatherFetchError(...)` before `.json()` in both clients.
 - **Why it mattered:** The inconsistency was easy to miss because the marine path was already correct. The forecast and geocoding paths were subtly more fragile — they would not throw a meaningful error on API failure, making outages very hard to diagnose.
+
+---
+
+## Phase 4 — ActivityRankingService
+
+### Double repository lookup on every request — eliminated
+
+- **What happened:** The initial implementation of `ActivityRankingService.rankActivities` called `isCacheValid(city)` and then, separately, `getForecast(city)` — two Map lookups on the same key for every request, even cache hits. In the cache-miss path there was also a trailing `getForecast` after `saveForecast`, reading back data we'd just constructed.
+- **Fix:** Replaced the pair of calls with a single `getForecast` upfront. Validity is now checked inline with `isCacheExpired(cached.expiresAt)`. In the miss path, the freshly-built `CachedForecast` object is held in the local `cached` variable after saving, so no trailing read is needed.
+- **Why it mattered:** Halves the repository operations on the hot path (cache hit: 2 → 1). The pattern — fetch once, check freshness, reuse the object — is also how you'd write this against a real database where each call has real I/O cost.
