@@ -23,3 +23,9 @@
 - Cache TTL: 1 hour (see docs/tradeoffs.md)
 - Marine API failure: silent fallback (surfing capped, not an error)
 - City name normalised to lowercase for cache key consistency
+
+## What I'd add next
+
+1. `departureDate` parameter — rank activities for a trip starting on a specific date, not just today's forecast. More useful for travel planning.
+2. Background cache refresh with a distributed lock — prevents thundering herd when cache expires under concurrent load.
+3. Per-activity weight configuration — allow intermediate vs advanced skill level to adjust scoring thresholds.

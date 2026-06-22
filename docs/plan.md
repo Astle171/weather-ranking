@@ -58,3 +58,10 @@ Phase 3 (scoring engine) over Phase 5 (GraphQL layer).
 Reason: the scoring logic is the interesting part. A working scorer
 with a basic GraphQL wrapper is more impressive than a polished API
 with weak scoring.
+
+## Note on time
+
+The brief budgets ~2–3 hours. I used Claude Code throughout, which is
+what made full coverage — all 4 scorers, tests, caching, and deployment —
+realistic within that window. The AI session log in docs/ai-session.md
+documents where I directed it, where it got things wrong, and what I changed.
